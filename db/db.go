@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"database/sql"
@@ -10,7 +10,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func main() {
+func Init() (*sql.DB, error) {
 	err := godotenv.Load("../.env")
 	if err != nil {
 		log.Panic(err)
@@ -25,16 +25,5 @@ func main() {
 		AllowNativePasswords: true,
 	}
 
-	conn, err := sql.Open("mysql", config.FormatDSN())
-	if err != nil {
-		log.Fatalf("Cannot create the db connection: %s", err)
-	}
-
-	defer conn.Close()
-
-	if err := conn.Ping(); err != nil {
-		log.Fatalf("Ping Error: %s", err)
-	}
-
-	fmt.Println("Database connected!")
+	return sql.Open("mysql", config.FormatDSN())
 }
