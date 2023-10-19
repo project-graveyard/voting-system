@@ -1,6 +1,19 @@
-# voting-system
+# Voting System
 
-A platform that allows a group of people to vote.
+Developing a robust and user-friendly voting system platform.
+
+## Features (Work in progress)
+
+### Core
+
+- Voter authentication.
+- Seamless real-time vote tracking and result visualization.
+- Candidate manifesto section.
+- Voting results archive.
+
+### Auxiliary
+
+- Admin dashboard.
 
 ## Environmental variables
 
