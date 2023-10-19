@@ -2,26 +2,43 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
+	"encoding/json"
 	"log"
 	"os"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/joho/godotenv"
 )
 
+type env struct {
+	DB db_cfg `json:"db"`
+}
+
+type db_cfg struct {
+	Username string `json:"username"`
+	Passwd   string `json:"passwd"`
+	Addr     string `json:"addr"`
+	Database string `json:"database"`
+}
+
 func Init() (*sql.DB, error) {
-	err := godotenv.Load("../.env")
+	file, err := os.ReadFile("../.env.json")
+	if err != nil {
+		log.Panic(err)
+	}
+
+	var os_env env
+
+	err = json.Unmarshal(file, &os_env)
 	if err != nil {
 		log.Panic(err)
 	}
 
 	config := mysql.Config{
-		User:                 os.Getenv("USERNAME"),
-		Passwd:               os.Getenv("PASSWORD"),
+		User:                 os_env.DB.Username,
+		Passwd:               os_env.DB.Passwd,
 		Net:                  "tcp",
-		Addr:                 fmt.Sprintf("%s:%s", os.Getenv("HOST"), os.Getenv("PORT")),
-		DBName:               os.Getenv("DATABASE"),
+		Addr:                 os_env.DB.Addr,
+		DBName:               os_env.DB.Database,
 		AllowNativePasswords: true,
 	}
 

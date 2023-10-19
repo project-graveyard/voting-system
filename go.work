@@ -3,6 +3,5 @@ go 1.21.3
 use (
 	.
 	./handlers
-	./types
 	./db
 )
