@@ -1,3 +1,4 @@
+// db package handles the creation of a database connection
 package db
 
 import (
@@ -6,13 +7,15 @@ import (
 	"log"
 	"os"
 
-	"github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql" // mysql driver
 )
 
+// env holds environment variables
 type env struct {
 	DB db_cfg `json:"db"`
 }
 
+// db_cfg hold database config from env
 type db_cfg struct {
 	Username string `json:"username"`
 	Passwd   string `json:"passwd"`
@@ -20,19 +23,22 @@ type db_cfg struct {
 	Database string `json:"database"`
 }
 
+// Init creates a new database connection
 func Init() (*sql.DB, error) {
 	file, err := os.ReadFile("../.env.json")
 	if err != nil {
-		log.Panic(err)
+		log.Panicf("Reading file: %s", err)
 	}
 
-	var os_env env
+	var os_env env // holds environment variables
 
+	// Unmarshal env file into os_env
 	err = json.Unmarshal(file, &os_env)
 	if err != nil {
-		log.Panic(err)
+		log.Panicf("Unmarshal json: %s", err)
 	}
 
+	// define mysql connection config
 	config := mysql.Config{
 		User:                 os_env.DB.Username,
 		Passwd:               os_env.DB.Passwd,
