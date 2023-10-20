@@ -6,7 +6,7 @@ import (
 )
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "Get" {
+	if r.Method == "GET" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		log.Printf("%s tried to access", r.RemoteAddr)
 		return
