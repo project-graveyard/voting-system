@@ -1,6 +1,8 @@
 package db_test
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/DaveSaah/voting-system/db"
@@ -31,6 +33,47 @@ func TestInsertData(t *testing.T) {
 
 	_, err = conn.Exec("insert into dummy values(1, 'First entry')")
 	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSanitizeDB(t *testing.T) {
+	// load sql file
+	file, err := os.ReadFile("./init.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// create db connection
+	conn, err := db.Init()
+	if err != nil {
+		t.Fatalf("Cannot create the db connection: %s", err)
+	}
+
+	defer conn.Close()
+
+	tx, err := conn.Begin() // start db transaction
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func() {
+		_ = tx.Rollback() // aborts transaction
+	}()
+
+	// run each line in file
+	for _, q := range strings.Split(string(file), ";") {
+		q := strings.TrimSpace(q)
+		if q == "" {
+			continue
+		}
+
+		if _, err := tx.Exec(q); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
 		t.Fatal(err)
 	}
 }
