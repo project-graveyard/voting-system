@@ -19,3 +19,7 @@ type Candidates struct {
 type VoteCount struct {
 	Number_of_votes int
 }
+
+type Dummy struct {
+	Description string
+}
