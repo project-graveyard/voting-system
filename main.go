@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/DaveSaah/voting-system/api"
+	"github.com/DaveSaah/voting-system/db/api"
 	"github.com/DaveSaah/voting-system/handlers"
 )
 
