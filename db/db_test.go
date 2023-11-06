@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/DaveSaah/voting-system/db"
+	"github.com/DaveSaah/voting-system/db/models"
 )
 
 func TestDatabaseConnection(t *testing.T) {
@@ -33,6 +34,22 @@ func TestInsertData(t *testing.T) {
 
 	_, err = conn.Exec("insert into dummy values(1, 'First entry')")
 	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAccessData(t *testing.T) {
+	var test_dummy models.Dummy
+
+	conn, err := db.Init()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer conn.Close()
+
+	row := conn.QueryRow("select description from dummy")
+	if err := row.Scan(&test_dummy.Description); err != nil {
 		t.Fatal(err)
 	}
 }
