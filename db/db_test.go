@@ -20,3 +20,17 @@ func TestDatabaseConnection(t *testing.T) {
 
 	t.Log("Database connected!")
 }
+
+func TestInsertData(t *testing.T) {
+	conn, err := db.Init()
+	if err != nil {
+		t.Fatalf("Cannot create the db connection: %s", err)
+	}
+
+	defer conn.Close()
+
+	_, err = conn.Exec("insert into dummy values(1, 'First entry')")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
