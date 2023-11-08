@@ -6,80 +6,111 @@ package api
 import (
 	"log"
 	"net/http"
-	"regexp"
+	"strings"
 )
 
 // define route handlers for api
 type (
-	homeHandler  struct{}
 	usersHandler struct{}
 )
 
-var (
-	// matches default users route: /users
-	userReq = regexp.MustCompile(`^/users/*$`)
-
-	// matches users route containing id: /users/<id>
-	userReqWithID = regexp.MustCompile(`^/users/([a-z0-9]+(?:-[a-z0-9]+)+)$`)
-)
-
-// define a store for users
-type Store interface {
-	Add() error
-	Get() error
-	Update() error
-	List() error
-	Remove() error
-}
-
-// ServeHTTP for homeHandler handles the /api route
-func (h *homeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// display a message
-	_, err := w.Write([]byte("Welcome to api home\n"))
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 // ServeHTTP for usersHandler handles the /api/users route
 func (u *usersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// display a message
-	_, err := w.Write([]byte("Welcome to users route\n"))
-	if err != nil {
-		log.Fatal(err)
+	// check if request includes query parameters
+	if ok := strings.Contains(r.URL.RequestURI(), "?"); !ok {
+		log.Printf("%s: no query data\n", r.Method)
+
+		switch r.Method {
+		case http.MethodGet:
+			u.listUsers(w, r)
+			return
+		case http.MethodPost:
+			u.createUser(w, r)
+			return
+		}
 	}
 
-	switch {
-	case r.Method == http.MethodPost && userReq.MatchString(r.URL.Path):
-		u.createUser(w, r)
-		return
-	case r.Method == http.MethodGet && userReq.MatchString(r.URL.Path):
-		u.listUsers(w, r)
-		return
-	case r.Method == http.MethodGet && userReqWithID.MatchString(r.URL.Path):
+	// if there are query parameters,
+	log.Printf("%s: query data included\n", r.Method)
+	params := make(map[string]any)
+
+	// get access to the query string -> everything after ?
+	query_str := strings.TrimPrefix(r.RequestURI, r.URL.Path+"?")
+	log.Printf("%s\n", query_str)
+
+	// store query parameters as a slice -> key=val
+	query_params := strings.Split(query_str, "&")
+	log.Printf("%v\n", query_params)
+
+	for _, val := range query_params {
+		v := strings.Split(val, "=")
+		params[v[0]] = v[1]
+	}
+
+	log.Printf("%v\n", params)
+
+	switch r.Method {
+	case http.MethodGet:
 		u.getUser(w, r)
-		return
-	case r.Method == http.MethodPut && userReqWithID.MatchString(r.URL.Path):
-		u.updateUser(w, r)
-		return
-	case r.Method == http.MethodDelete && userReqWithID.MatchString(r.URL.Path):
-		u.deleteUser(w, r)
-		return
-	default:
 		return
 	}
 }
 
-func (u *usersHandler) createUser(w http.ResponseWriter, r *http.Request) {}
-func (u *usersHandler) listUsers(w http.ResponseWriter, r *http.Request)  {}
-func (u *usersHandler) getUser(w http.ResponseWriter, r *http.Request)    {}
-func (u *usersHandler) updateUser(w http.ResponseWriter, r *http.Request) {}
-func (u *usersHandler) deleteUser(w http.ResponseWriter, r *http.Request) {}
+// case r.Method == http.MethodPost:
+//
+//	u.createUser(w, r)
+//	return
+//
+//
+// case r.Method == http.MethodPut && userReqWithID.MatchString(r.URL.Path):
+// 	u.updateUser(w, r)
+// 	return
+// case r.Method == http.MethodDelete && userReqWithID.MatchString(r.URL.Path):
+// 	u.deleteUser(w, r)
+// 	return
+// default:
+// 	return
+// }
+// }
+
+func (u *usersHandler) createUser(w http.ResponseWriter, r *http.Request) {
+	_, err := w.Write([]byte("User created\n"))
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (u *usersHandler) listUsers(w http.ResponseWriter, r *http.Request) {
+	_, err := w.Write([]byte("User list\n"))
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (u *usersHandler) getUser(w http.ResponseWriter, r *http.Request) {
+	_, err := w.Write([]byte("User data retrieved\n"))
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// func (u *usersHandler) updateUser(w http.ResponseWriter, r *http.Request) {
+// 	_, err := w.Write([]byte("User data updated\n"))
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
+//
+// func (u *usersHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
+// 	_, err := w.Write([]byte("User data deleted\n"))
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
 
 func Init() *http.ServeMux {
 	mux := http.NewServeMux()
 
-	mux.Handle("/api", &homeHandler{})
 	mux.Handle("/api/users", &usersHandler{})
 	mux.Handle("/api/users/", &usersHandler{})
 
