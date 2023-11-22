@@ -3,6 +3,7 @@ package models
 type Users struct {
 	Fname string
 	Lname string
+	ID    string
 	Class int
 }
 

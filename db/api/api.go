@@ -4,10 +4,12 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
+
+	"github.com/DaveSaah/voting-system/db/models"
 )
 
 // define route handlers for api
@@ -18,72 +20,74 @@ type (
 // ServeHTTP for usersHandler handles the /api/users route
 func (u *usersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// check if request includes query parameters
-	if ok := strings.Contains(r.URL.RequestURI(), "?"); !ok {
-		switch r.Method {
-		case http.MethodGet:
-			u.listUsers(w, r)
-			return
-		default:
-			err := fmt.Sprintf("Error %d: Method not allowed\n", http.StatusMethodNotAllowed)
-			_, _ = w.Write([]byte(err))
-			return
-		}
-	}
-
-	// get access to the query string -> everything after "?"
-	qs := strings.TrimPrefix(r.RequestURI, r.URL.Path+"?")
-
-	// store query parameters as a slice -> key=val
-	qp := strings.Split(qs, "&")
-
-	params := make(map[string]string)
-
-	// set params as (key, value) pairs
-	for _, val := range qp {
-		v := strings.Split(val, "=")
-		params[v[0]] = v[1]
-	}
-
-	switch r.Method {
-	case http.MethodGet:
-		u.getUser(w, r, params["id"])
+	switch {
+	// r.ContentLength is 0 when the r.Body is empty
+	case r.Method == http.MethodGet && r.ContentLength == 0:
+		u.listUsers(w, r)
 		return
-	case http.MethodPost:
-		u.createUser(w, r, params)
+	case r.Method == http.MethodGet:
+		u.getUser(w, r)
+		return
+	case r.Method == http.MethodPost:
+		u.createUser(w, r)
+		return
+	default:
+		err := fmt.Sprintf("Error %d: Method not allowed\n", http.StatusMethodNotAllowed)
+		_, _ = w.Write([]byte(err))
 		return
 	}
 }
 
 // createUser creates a new user in the database
 // It handles POST requests to /api/users
-func (u *usersHandler) createUser(w http.ResponseWriter, r *http.Request, data map[string]string) {
-	msg := fmt.Sprintf(
-		"Created a new user with:\nID: %s, Name: %s, Class:%s\n",
-		data["id"], data["fname"]+" "+data["lname"], data["class"],
-	)
-	_, err := w.Write([]byte(msg))
+// Returns error if json data is not parsed correctly
+func (u *usersHandler) createUser(w http.ResponseWriter, r *http.Request) {
+	var user models.Users
+
+	// decode json data
+	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		log.Fatal(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
+
+	log.Printf("New user created with ID: %s", user.ID)
 }
 
 // listUsers retrieves all users from the database
 // It handles GET requests to /api/users
+// Returns a json response containing the list of all users
 func (u *usersHandler) listUsers(w http.ResponseWriter, r *http.Request) {
-	_, err := w.Write([]byte("User list\n"))
+	var users []models.Users
+
+	users = append(users, models.Users{
+		Fname: "Dave",
+		Lname: "Saah",
+		Class: 2025,
+		ID:    "72522025",
+	})
+
+	users = append(users, models.Users{
+		Fname: "John",
+		Lname: "Doe",
+		Class: 2025,
+		ID:    "72522026",
+	})
+
+	// return a json response
+	w.Header().Set("Content-Type", "application/json")
+	res, err := json.Marshal(users)
 	if err != nil {
-		log.Fatal(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+
+	_, _ = w.Write(res)
 }
 
 // getUser retrieves a user from the database
 // It handles GET requests to /api/users/{id}
-func (u *usersHandler) getUser(w http.ResponseWriter, r *http.Request, id string) {
-	msg := fmt.Sprintf("User %s retrieved\n", id)
-	_, err := w.Write([]byte(msg))
-	if err != nil {
-		log.Fatal(err)
-	}
+func (u *usersHandler) getUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func Init() *http.ServeMux {
